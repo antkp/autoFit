@@ -2,14 +2,14 @@ import sys
 from pyqtgraph.Qt import QtCore, QtGui , QtWidgets
 from ui import Ui
 from data import Data
-from control import Control
-
+from contr import Control
 
 # todo
-#   update/remove each plot
-#   read start position from data name
-#   fit data --> least squares
-
+#   update/remove each plot --> change the structure
+#   read start position from data name - option
+#   fit data - least squares --> option
+#   fit data - ICP ?  --> option
+#   filter - option
 
 
 def main():

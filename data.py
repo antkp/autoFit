@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
 class Data(QtCore.QObject):
@@ -33,33 +34,18 @@ class Data(QtCore.QObject):
         self.files = [f for f in os.listdir(path) if f.endswith(".lsdf")]
         self.files.sort()
         print('files = ', self.files )
-
-
-        # n = 0
-        # for file in os.listdir(path):
-        #     if file.endswith(".lsdf"):      #check numer of files *.lsdf
-        #         n = n + 1
-        # files = []
-        # for i in range(n):
-        #     st = 'm' + str(i + 1)
-        #     for f in os.listdir(path):
-        #         #if f.startswith(st):
-        #         files.append(f)
-
         return path, self.files
 
-    def loadfile(self, path):
+    def readfile(self, path):
+        print(' enter loadfile')
+        print('path = ', path)
         head = 1
         delimiter = '\t'
-        #self.separator = '.'
         xcol = 2
         ycol = 1
-        print('loadfile')
         text = open(path, 'r').read()
         text = text[0:text.find('0;0;')]
         text = text.replace('nan', '0')
-        # if self.separator == ',':
-        #     text = text.replace(',', '.')
         temp_file = open("temp", "w+")
         temp_file.write(text)
         data = np.genfromtxt('temp', skip_header=head, delimiter=delimiter, usecols=[xcol, ycol], autostrip=True, )
@@ -91,3 +77,24 @@ class Data(QtCore.QObject):
         if len(array) != len(parray):
             parray = np.delete(parray, -1)
         return array + parray
+
+    def lowess_filter(self, y, fraction, iteration):
+        print('enter lowess_filter')
+        y_f = lowess(y, np.arange(len(y)), is_sorted=True, frac=fraction, it=iteration)
+        y_f = y_f[:, 1]
+        print('exit lowess_filter')
+        return y_f
+
+    def lincomp(self, y):
+        print('enter lincomp')
+        yd = self.lowess_filter(y, 0.03, 0)
+        delta = yd[-1] - yd[0]
+        n = len(y)
+        comparray = np.arange(0, delta, (delta / n))
+        if n != len(comparray):
+            arr = y - comparray[:n]
+        else:
+            arr = y - comparray
+        print('exit lincomp')
+        return arr
+
