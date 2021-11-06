@@ -1,8 +1,8 @@
 import sys
-from pyqtgraph.Qt import QtCore, QtGui , QtWidgets
+from pyqtgraph.Qt import QtCore, QtGui
 from ui import Ui
 from data import Data
-from contr import Control
+from control import Control
 
 # todo
 #   update/remove each plot --> change the structure
@@ -10,7 +10,6 @@ from contr import Control
 #   fit data - least squares --> option
 #   fit data - ICP ?  --> option
 #   filter - option
-
 
 def main():
     print('main')

@@ -1,11 +1,8 @@
-import sys
-import os
 import pyqtgraph as pg
-import numpy as np
 from pyqtgraph.dockarea import *
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.parametertree import Parameter, ParameterTree
-from statsmodels.nonparametric.smoothers_lowess import lowess
+
 
 
 class PParameter (pg.parametertree.Parameter):
@@ -20,7 +17,10 @@ class Ui:
         self.path = ''
 
         self.params1 = [
-            {'name': 'select folder', 'type': 'action', 'tip': "select folder"}]
+            {'name': 'select folder', 'type': 'action', 'tip': "select folder"},
+            {'name': 'coeff scale X', 'type': 'float', 'value': 5.0, 'step': 0.001},
+            {'name': 'coeff scale Y', 'type': 'float', 'value': 1.0, 'step': 0.001}
+            ]
 
         self.params2 = [
             {'name': 'select filter', 'type': 'list', 'values':
@@ -83,7 +83,6 @@ class Ui:
         self.d2.addWidget(self.w2, row=0, col=0)
         self.d2.addWidget(self.wi2, row=0, col=1)
 
-
         self.r4 = pg.ROI([0, 0], [10, 0], resizable=False, removable=True)
         self.r4.addRotateHandle([1, 0], [0, 1])
         self.r4.addTranslateHandle([0, 0], [0.5, 0.5])
@@ -98,32 +97,18 @@ class Ui:
         filename = dict(name=par.filename, type='group', removable=True, renamable=False, expanded=False)
         m = par.m
         color = dict(name=str(m)+'_color', type='color', value=par.color, tip='plot color', removable=True, renamable=False)
-        scalex = dict(name=str(m)+'_scale X', type='float', value=par.xscale, tip="scale coeff x-axis",
-                       removable=True, renamable=False)
-        scaley = dict(name=str(m)+'_scale Y', type='float', value=par.yscale, tip="scale coeff x-axis",
-                      removable=True, renamable=False)
+        # scalex = dict(name=str(m)+'_scale X', type='float', value=par.xscale, tip="scale coeff x-axis",
+        #                removable=True, renamable=False)
+        # scaley = dict(name=str(m)+'_scale Y', type='float', value=par.yscale, tip="scale coeff x-axis",
+        #               removable=True, renamable=False)
         offsetx = dict(name=str(m)+'_offset X', type='float', value=par.offsetx, tip="offsetf in x-dir",
                        removable=True, renamable=False)
         offsety = dict(name=str(m)+'_offset Y', type='float', value=par.offsety, tip="offset in y-dir",
                        removable=True, renamable=False)
         tilt = dict(name=str(m)+'_tilt', type='float', value=par.tilt, tip="tilt from the right",
                         removable=True, renamable=False)
-        # head = dict(name='head rows', type='int', value=1, limits=[0, 20], tip="ignore first rows of data head",
-        #             removable=True, renamable=False)
-        # delim = dict(name='delimiter', type='list', values=['\t', ';', ','], value='\t',
-        #              tip='delimiter between columns', removable=True, renamable=False)
-        # sep = dict(name='decimal separator', type='list', values=['.', ','], value='.', tip='decimal separator',
-        #            removable=True, renamable=False)
-        # xcol = dict(name='x-col', type='list', value=2, limits=(0, 15), step=1,
-        #             values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], renamable=False,
-        #             tip="select row number for X values (first row = 0) ", removable=True)
-        # ycol = dict(name='y-col', type='list', values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        #             value=1, limits=(0, 15), step=1, removable=True, renamable=False,
-        #             tip="select row number for Y values (first row = 0)")
-        # scaley = dict(name='scale y-axis', type='float', value=1.0, tip="scale coeff y-axis",
-        #               removable=True, renamable=False)
 
-        self.more = [color, scalex, scaley, offsetx, offsety, tilt]
+        self.more = [color, offsetx, offsety, tilt]
 
         self.p.addChild(filename)
         for i in self.more:
