@@ -20,6 +20,7 @@ class Control:
         self.data = data
         self.ui = ui
         self.ui.p.child('select folder').sigActivated.connect(self.onSelectBtn)
+        self.ui.p.child('filter').hide()
 
     def onSelectBtn(self):
         print('enter onSelectBtn')
@@ -33,6 +34,13 @@ class Control:
         self.ui.w2.clear()
         for key in self.data.files:
             ###---init data arrays ---####
+
+            # 01_x(y)_-1083_-683.lsdf
+            print('===  ', key, ' ===')
+            print([pos for pos, char in enumerate(key) if char == '_'])
+            q = [pos for pos, char in enumerate(key) if char == '_']
+            startoffset = int(key[q[1]+1:q[2]])  # startoffset given from filename # 01_x(y)_-1083_-683.lsdf -->-1083
+
             x, y = self.data.readfile(os.path.join(directory, key))
             self.data.files[i] = str(int(key[:2]))
             self.data.rawxarray.append(x)
@@ -40,6 +48,7 @@ class Control:
             autox, autoy, self.low, self.high = self.auto_cut_pitch(x, y, lowess_frac, lowess_it, low_cut_coeff, high_cut_coeff)
             self.data.autoxarray.append(autox)
             self.data.autoyarray.append(autoy)
+            self.data.Y_filtered.append(autoy)
             self.data.xarray.append(0.0)
             self.data.yarray.append(0.0)
             self.data.offsetxarray.append(0.0)
@@ -49,22 +58,20 @@ class Control:
             self.data.rioarray.append(pg.ROI([0.0, 0.0], [0.0, 0.0]))
 
             ###---init arrays ---####
-            self.data.offsetxarray[i] = ix*0.05 # todo den koeff 0,05 anpassen
+            self.data.offsetxarray[i] = startoffset
             self.data.scalex = self.ui.p.child('coeff scale X').value()
             self.data.scaley = self.ui.p.child('coeff scale Y').value()
-            self.data.xarray[i] = self.data.scale_array(self.data.autoxarray[i], self.data.scalex)
-            self.data.yarray[i] = self.data.scale_array(self.data.autoyarray[i], self.data.scaley)
-            self.data.xarray[i] = self.data.offset_array(self.data.xarray[i], self.data.offsetxarray[i])
-            self.data.yarray[i] = self.data.offset_array(self.data.yarray[i], self.data.offsetyarray[i])
-
+            self.data.xarray[i] = self.data.autoxarray[i] * self.data.scalex
+            self.data.yarray[i] = self.data.Y_filtered[i] * self.data.scaley
+            self.data.xarray[i] = self.data.xarray[i] + self.data.offsetxarray[i]
+            self.data.yarray[i] = self.data.yarray[i] + self.data.offsetyarray[i]
             self.plot_graph(self.data.xarray[i], self.data.yarray[i], self.data.colorarray[i], self.data.files[i])
             ix = ix + int(len(self.data.xarray[i])/2)
 
             ###---init tree---###
-            print('y3 = ', self.data.autoyarray[i][0])
-            par = Measurement(self.data.files[i], int(self.data.files[i]), self.data.xarray[i], self.data.yarray[i],
-                              self.data.colorarray[i], self.data.offsetxarray[i], self.data.offsetyarray[i],
-                              self.data.tiltarray[i])
+            par = Measurement(self.data.files[i], int(self.data.files[i]), self.data.xarray[i],
+                              self.data.yarray[i],self.data.colorarray[i], self.data.offsetxarray[i],
+                              self.data.offsetyarray[i],self.data.tiltarray[i])
             self.ui.adNewlimb(par)
 
             ###---init RIOs ---####
@@ -76,6 +83,12 @@ class Control:
             self.ui.w2.addItem(self.data.rioarray[i])
 
             ###---init signals ---####
+            self.ui.p.child('filter').show()
+            self.ui.p.child('filter').child('select filter').sigValueChanged.connect(self.on_filter)
+            self.ui.p.child('filter').child('gauss').child('sigma').sigValueChanged.connect(self.on_filter)
+            self.ui.p.child('filter').child('lowess').child('fraction').sigValueChanged.connect(self.on_filter)
+            self.ui.p.child('filter').child('lowess').child('iteration').sigValueChanged.connect(self.on_filter)
+
             self.ui.p.child('coeff scale X').sigValueChanged.connect(self.initial)
             self.ui.p.child('coeff scale Y').sigValueChanged.connect(self.initial)
             self.ui.p.child(self.data.files[i]).child(self.data.files[i] + '_color').sigValueChanged.connect(self.on_val)
@@ -91,18 +104,16 @@ class Control:
         print('enter initial')
         self.data.scalex = self.ui.p.child('coeff scale X').value()
         self.data.scaley = self.ui.p.child('coeff scale Y').value()
-        # i = 0
         ix = 0
         self.ui.w2.clear()
         for i in range(len(self.data.xarray)):
-            ###---init arrays ---####
             self.data.offsetxarray[i] = ix*0.05 # todo den koeff 0,05 anpassen
             self.data.scalex = self.ui.p.child('coeff scale X').value()
             self.data.scaley = self.ui.p.child('coeff scale Y').value()
-            self.data.xarray[i] = self.data.scale_array(self.data.autoxarray[i], self.data.scalex)
-            self.data.yarray[i] = self.data.scale_array(self.data.autoyarray[i], self.data.scaley)
-            self.data.xarray[i] = self.data.offset_array(self.data.xarray[i], self.data.offsetxarray[i])
-            self.data.yarray[i] = self.data.offset_array(self.data.yarray[i], self.data.offsetyarray[i])
+            self.data.xarray[i] = self.data.autoxarray[i] * self.data.scalex
+            self.data.yarray[i] = self.data.Y_filtered[i] * self.data.scaley
+            self.data.xarray[i] = self.data.xarray[i] + self.data.offsetxarray[i]
+            self.data.yarray[i] = self.data.yarray[i] + self.data.offsetyarray[i]
 
             self.plot_graph(self.data.xarray[i], self.data.yarray[i], self.data.colorarray[i], self.data.files[i])
             ix = ix + int(len(self.data.xarray[i])/2)
@@ -147,35 +158,28 @@ class Control:
 
     def plot_graph(self, x, y, color, name):
         print('enter plotgraph')
-        print('plot_y = ', y[0])
         self.data.plotarray[int(name)-1] = self.ui.w2.plot(x, y, pen=color, name=name)
         print('exit plotgraph')
 
     def update_plot(self, u):
         print('enter_update_plot')
         self.ui.w2.removeItem(self.data.plotarray[int(u)])
-        print('u = ', u)
         for i in range(len(self.data.xarray)):
-            self.data.xarray[i] = self.data.scale_array(self.data.autoxarray[i], self.data.scalex)
-            self.data.yarray[i] = self.data.scale_array(self.data.autoyarray[i], self.data.scaley)
-            self.data.xarray[i] = self.data.offset_array(self.data.xarray[i], self.data.offsetxarray[i])
-            self.data.yarray[i] = self.data.offset_array(self.data.yarray[i], self.data.offsetyarray[i])
+            self.data.xarray[i] = self.data.autoxarray[i] * self.data.scalex
+            self.data.yarray[i] = self.data.Y_filtered[i] * self.data.scaley
+            self.data.xarray[i] = self.data.xarray[i] + self.data.offsetxarray[i]
+            self.data.yarray[i] = self.data.yarray[i] + self.data.offsetyarray[i]
             self.data.yarray[i] = self.data.tilt_array(self.data.yarray[i], self.data.tiltarray[i])
         self.plot_graph(self.data.xarray[u], self.data.yarray[u], self.data.colorarray[u], self.data.files[u])
-        #self.ui.w2.autoRange()
         print('exit_update_plot')
 
     def on_val(self, name, val):
         print('enter_on_val')
         name = name.name()
         u = int(name[0])-1
-        print('u = ', u)
-        print('name = ', name, ' value = ', val)
         x = self.ui.p.child(self.data.files[u]).children()
         c = x[0].value()
         self.data.colorarray[u] = c.name()
-        #self.data.xscalearray[u] = x[1].value()
-        #self.data.yscalearray[u] = x[2].value()
         self.data.offsetxarray[u] = x[1].value()
         self.data.offsetyarray[u] = x[2].value()
         self.data.tiltarray[u] = x[3].value()
@@ -187,21 +191,40 @@ class Control:
 
     def on_rioUpdate(self, rio):
         print('enter rioUpdate')
-        print('rio = ', rio)
         i = self.data.rioarray.index(rio)
         p = rio.pos()
         t = np.tan(np.radians(rio.angle())) * rio.size()[0]
         self.data.offsetxarray[i] = p[0]
         self.data.offsetyarray[i] = p[1]
         self.data.tiltarray[i] = t
-        # def aChanged(self):
-        #     self.b.setValue(1.0 / self.a.value(), blockSignal=self.bChanged)
-        #
-        # def bChanged(self):
-        #     self.a.setValue(1.0 / self.b.value(), blockSignal=self.aChanged)
         self.ui.p.child(self.data.files[i]).child(self.data.files[i] + '_offset X').setValue(p[0], blockSignal=self.on_val)
         self.ui.p.child(self.data.files[i]).child(self.data.files[i] + '_offset Y').setValue(p[1], blockSignal=self.on_val)
         self.ui.p.child(self.data.files[i]).child(self.data.files[i] + '_tilt').setValue(t, blockSignal=self.on_val)
         self.update_plot(i)
         print('exit rioUpdate')
+
+    def on_filter(self):
+        with pg.BusyCursor():
+            print('on_filter')
+            self.filter = self.ui.p.child('filter').child('select filter').value()
+            for i in range(len(self.data.xarray)):
+                if self.filter == '- no filter -':
+                    self.ui.p.child('filter').child('gauss').hide()
+                    self.ui.p.child('filter').child('lowess').hide()
+                    self.data.Y_filtered[i] = self.data.autoyarray[i]
+                if self.filter == 'gauss':
+                    self.ui.p.child('filter').child('gauss').show()
+                    self.ui.p.child('filter').child('lowess').hide()
+                    sigma = self.ui.p.child('filter').child('gauss').child('sigma').value()
+                    self.data.Y_filtered[i] = self.data.gauss_filter(self.data.autoyarray[i], sigma)
+
+                if self.filter == 'lowess':
+                    self.ui.p.child('filter').child('gauss').hide()
+                    self.ui.p.child('filter').child('lowess').show()
+                    fraction = self.ui.p.child('filter').child('lowess').child('fraction').value()
+                    iteration = self.ui.p.child('filter').child('lowess').child('iteration').value()
+                    self.data.Y_filtered[i] = self.data.lowess_filter(self.data.autoyarray[i], fraction, iteration)
+                self.update_plot(i)
+
+
 

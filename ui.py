@@ -22,17 +22,13 @@ class Ui:
             {'name': 'coeff scale Y', 'type': 'float', 'value': 1.0, 'step': 0.001}
             ]
 
+
         self.params2 = [
-            {'name': 'select filter', 'type': 'list', 'values':
-                ['- no filter -', 'gauss', 'savitzky–golay', 'lowess'], 'value': '- no filter -',
+            {'name': 'select filter', 'type': 'list', 'visible': True, 'values':
+                ['- no filter -', 'gauss', 'lowess'], 'value': '- no filter -',
                 'tip': 'https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.gaussian_filter1d.html'},
             {'name': 'gauss', 'type': 'group', 'expanded': True, 'visible': False, 'children': [
                 {'name': 'sigma', 'type': 'float', 'value': 3.0, 'limits': (0.0, 6.0), 'step': 0.1}]},
-            {'name': 'savitzky–golay', 'type': 'group', 'expanded': True, 'visible': False,
-                'tip': 'https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.savgol_filter.html',
-                'children': [
-                    {'name': 'size', 'type': 'int', 'value': 31, 'limits': (11, 501), 'step': 1},
-                    {'name': 'order', 'type': 'int', 'value': 3, 'limits': (2, 10), 'step': 1}]},
             {'name': 'lowess', 'type': 'group', 'expanded': True, 'visible': False,
                 'tip': 'https://www.statsmodels.org/stable/generated/statsmodels.nonparametric.smoothers_lowess.lowess.html',
                 'children': [
@@ -55,12 +51,10 @@ class Ui:
         self.d1.hideTitleBar()
         self.d2 = Dock("raw data", size=(900, 100))
         self.d2.hideTitleBar()
-        #self.d3 = Dock("raw data", size=(900, 100))
-        #self.d3.hideTitleBar()
 
         self.area.addDock(self.d1, 'left')
         self.area.addDock(self.d2, 'right')
-        #self.area.addDock(self.d3, 'bottom', self.d2)
+
 
         self.t = ParameterTree()
         self.t.setParameters(self.p, showTop=False)
@@ -96,11 +90,8 @@ class Ui:
 
         filename = dict(name=par.filename, type='group', removable=True, renamable=False, expanded=False)
         m = par.m
-        color = dict(name=str(m)+'_color', type='color', value=par.color, tip='plot color', removable=True, renamable=False)
-        # scalex = dict(name=str(m)+'_scale X', type='float', value=par.xscale, tip="scale coeff x-axis",
-        #                removable=True, renamable=False)
-        # scaley = dict(name=str(m)+'_scale Y', type='float', value=par.yscale, tip="scale coeff x-axis",
-        #               removable=True, renamable=False)
+        color = dict(name=str(m)+'_color', type='color', value=par.color, tip='plot color', removable=True,
+                     renamable=False)
         offsetx = dict(name=str(m)+'_offset X', type='float', value=par.offsetx, tip="offsetf in x-dir",
                        removable=True, renamable=False)
         offsety = dict(name=str(m)+'_offset Y', type='float', value=par.offsety, tip="offset in y-dir",

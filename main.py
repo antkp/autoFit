@@ -5,8 +5,6 @@ from data import Data
 from control import Control
 
 # todo
-#   update/remove each plot --> change the structure
-#   read start position from data name - option
 #   fit data - least squares --> option
 #   fit data - ICP ?  --> option
 #   filter - option

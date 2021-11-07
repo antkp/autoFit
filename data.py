@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from pyqtgraph.Qt import QtCore, QtGui
+from scipy.ndimage import gaussian_filter1d
 from statsmodels.nonparametric.smoothers_lowess import lowess
-
 
 class Data(QtCore.QObject):
     sig_data_loaded = QtCore.pyqtSignal()
@@ -14,6 +14,7 @@ class Data(QtCore.QObject):
         self.rawyarray = []
         self.autoxarray = []
         self.autoyarray = []
+        self.Y_filtered = []
         self.xarray = []
         self.yarray = []
         self.rioarray = []
@@ -54,32 +55,32 @@ class Data(QtCore.QObject):
         print('exit loadfile')
         return (x_raw[0:], y_raw[0:])
 
-    def scale_array(self, array, coeff):
-        print('enter scale_array')
-        sc_array = array * coeff
-        print('exit scale_array')
-        return sc_array
-
-    def offset_array(self, array, offset):
-        print('enter offset_array')
-        off_array = array + offset
-        print('exit offset_array')
-        return off_array
+    # def scale_array(self, array, coeff):
+    #     print('enter scale_array')
+    #     sc_array = array * coeff
+    #     print('exit scale_array')
+    #     return sc_array
+    #
+    # def offset_array(self, array, offset):
+    #     print('enter offset_array')
+    #     off_array = array + offset
+    #     print('exit offset_array')
+    #     return off_array
 
     def tilt_array(self, array, tilt):
-        print('enter pitch_array')
+        #print('enter tilt_array')
         if tilt == 0.0:
-            parray = np.zeros(len(array))
-            print('len(array) = ', len(array))
-            print('len(parray) = ', len(parray))
+            tarray = np.zeros(len(array))
         else:
-            parray = np.arange(start=0, stop=tilt, step= tilt/len(array))
-            print('else_len(array) = ', len(array))
-            print('else_len(parray) = ', len(parray))
-        if len(array) != len(parray):
-            parray = np.delete(parray, -1)
-        print('exit pitch_array')
-        return array + parray
+            tarray = np.arange(start=0, stop=tilt, step= tilt/len(array))
+        if len(array) != len(tarray):
+            tarray = np.delete(tarray, -1)
+        #print('exit tilt_array')
+        return array + tarray
+
+    def gauss_filter(self, y, sigma):
+        y_f = gaussian_filter1d(y, sigma)
+        return y_f
 
     def lowess_filter(self, y, fraction, iteration):
         print('enter lowess_filter')
@@ -90,7 +91,6 @@ class Data(QtCore.QObject):
 
     def lincomp(self, y):
         print('enter lincomp')
-        #yd = self.lowess_filter(y, 0.03, 0)
         yd = y
         delta = yd[-1] - yd[0]
         n = len(y)
