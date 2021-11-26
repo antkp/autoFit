@@ -4,10 +4,6 @@ from ui import Ui
 from data import Data
 from control import Control
 
-# todo
-#   fit data - least squares --> option
-#   fit data - ICP ?  --> option
-#   filter - option
 
 def main():
     print('main')
